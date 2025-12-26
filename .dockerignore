@@ -1,0 +1,42 @@
+# Custom ignores
+datasets/
+area_segmentation/experiments/prev_tests
+nuclei_segmentation/experiments/prev_tests
+analysis/
+qupath_projects/
+
+# Standard Python & Git
+__pycache__/
+*.pyc
+.venv/
+.wsl_venv/
+.check_venv/
+.torch_venv/
+.win_venv/
+.venv_pytorch_test/
+venv/
+.git/
+.gitignore
+.dockerignore
+
+# IDE config
+.vscode/
+.idea/
+
+# Jupyter Notebooks
+**/*.ipynb
+
+# Documentation
+**/*.md
+
+# Model files, logs, and outputs
+area_segmentation/models/
+nuclei_segmentation/models/
+
+# Common artifact types
+**/*.h5
+**/*.keras
+**/*.png
+**/*.json
+**/*.log
+**/logs/

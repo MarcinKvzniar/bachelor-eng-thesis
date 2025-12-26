@@ -1,0 +1,38 @@
+# Results and model files
+analysis/
+area_segmentation/results/
+nuclei_segmentation/results/
+area_segmentation/models/
+nuclei_segmentation/models/
+nuclei_segmentation/experiments/prev_tests/
+area_segmentation/experiments/prev_tests/
+
+# Other - not applicable to repo
+area_segmentation/not_used/
+nuclei_segmentation/not_used/
+datasets/
+qupath_projects/
+
+# Standard Python & Git
+__pycache__/
+*.pyc
+.venv/
+.wsl_venv/
+.check_venv/
+.torch_venv/
+.win_venv/
+.venv_pytorch_test/
+venv/
+.git/
+
+# IDE config
+.vscode/
+.idea/
+
+# Common artifact types
+**/*.h5
+**/*.keras
+**/*.png
+**/*.json
+**/*.log
+**/logs/
