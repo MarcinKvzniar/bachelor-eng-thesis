@@ -31,25 +31,25 @@ else:
 
 # --- Paths Configuration ---
 if USE_GPU:
-    SILVER_CLEAN_PATH = "/app/datasets/dataset_area/ds_3_classes_0.9_filter/clean"
-    SILVER_MASK_PATH = "/app/datasets/dataset_area/ds_3_classes_0.9_filter/mask"
+    SILVER_CLEAN_PATH = ""
+    SILVER_MASK_PATH = ""
     
-    GOLD_CLEAN_PATH = "/app/datasets/dataset_area/ds_3_classes_finetune/clean"
-    GOLD_MASK_PATH = "/app/datasets/dataset_area/ds_3_classes_finetune/mask"
-    
-    MODEL_DIR = '/app/area_segmentation/models/segformer_hybrid'
-    MODEL_PATH = f'{MODEL_DIR}/segformer_area.pth'
-    VISUALIZATION_DIR = f'{MODEL_DIR}/outputs'
-else:
-    BASE_LOCAL = ""
-    SILVER_CLEAN_PATH = os.path.join(BASE_LOCAL, "dataset_area/ds_3_classes_0.9_filter/clean")
-    SILVER_MASK_PATH = os.path.join(BASE_LOCAL, "dataset_area/ds_3_classes_0.9_filter/mask")
-    GOLD_CLEAN_PATH = os.path.join(BASE_LOCAL, "dataset_area/ds_3_classes_finetune/clean")
-    GOLD_MASK_PATH = os.path.join(BASE_LOCAL, "dataset_area/ds_3_classes_finetune/mask")
+    GOLD_CLEAN_PATH = ""
+    GOLD_MASK_PATH = ""
     
     MODEL_DIR = ''
-    MODEL_PATH = f'{MODEL_DIR}/segformer_area.pth'
-    VISUALIZATION_DIR = f'{MODEL_DIR}/outputs'
+    MODEL_PATH = ''
+    VISUALIZATION_DIR = ''
+else:
+    BASE_LOCAL = ""
+    SILVER_CLEAN_PATH = os.path.join(BASE_LOCAL, "")
+    SILVER_MASK_PATH = os.path.join(BASE_LOCAL, "")
+    GOLD_CLEAN_PATH = os.path.join(BASE_LOCAL, "")
+    GOLD_MASK_PATH = os.path.join(BASE_LOCAL, "")
+    
+    MODEL_DIR = ''
+    MODEL_PATH = ''
+    VISUALIZATION_DIR = ''
 
 # --- Training Configuration ---
 IMG_HEIGHT, IMG_WIDTH = 512, 512

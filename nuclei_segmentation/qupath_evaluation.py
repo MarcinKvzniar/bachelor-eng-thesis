@@ -3,8 +3,6 @@ QuPath Segmentation Evaluation Script
 Evaluates QuPath predictions against keypoint annotations using the same metrics as model evaluation.
 """
 
-import os
-import sys
 import json
 import cv2
 import numpy as np
@@ -20,7 +18,6 @@ DATA_ROOT = ""
 QUPATH_SEG_DIR = ""
 OUTPUT_DIR = Path('')
 
-# Parameters
 IMG_HEIGHT, IMG_WIDTH = 512, 512
 NUM_CLASSES = 4
 
@@ -75,7 +72,7 @@ def load_slide_data(data_root):
     slide_dirs = [d for d in data_root.iterdir() if d.is_dir()]
     
     all_data = []
-    print(f"Scanning {len(slide_dirs)} slide directories...")
+    print(f"Scanning {len(slide_dirs)} slide directories")
     
     for slide_dir in sorted(slide_dirs):
         annotations_file = slide_dir / 'annotations.json'
@@ -180,7 +177,7 @@ def check_component_has_keypoint(component, keypoints, expected_class, proximity
     component_mask = component['mask']
     
     for kp in keypoints:
-        if kp['label'] = expected_class:
+        if kp['label'] != expected_class:
             continue
         
         x_int = int(round(kp['local_x']))
@@ -280,15 +277,7 @@ def calculate_ki67_metrics(ki67_results):
 
 
 def evaluate_patch_fast(keypoints, pred_mask, components_neg, components_pos):
-    """
-    Evaluate patch using pre-computed connected components.
-    
-    Args:
-        keypoints: List of keypoints with annotations
-        pred_mask: Predicted segmentation mask
-        components_neg: Tuple of (labeled_mask, num_features, components_list) for Ki-67-
-        components_pos: Tuple of (labeled_mask, num_features, components_list) for Ki-67+
-    """
+    """Evaluate patch using pre-computed connected components."""
     results = {
         'coverage_rate': 0.0,
         'mask_validity_rate': 0.0,
@@ -388,14 +377,7 @@ def evaluate_patch_fast(keypoints, pred_mask, components_neg, components_pos):
 
 
 def evaluate_patch_ki67_fast(keypoints, components_neg, components_pos):
-    """
-    Evaluate Ki-67 proliferation index using pre-computed components.
-    
-    Args:
-        keypoints: List of keypoints with annotations
-        components_neg: Tuple of (labeled_mask, num_features, components_list) for Ki-67-
-        components_pos: Tuple of (labeled_mask, num_features, components_list) for Ki-67+
-    """
+    """Evaluate Ki-67 proliferation index using pre-computed components."""
     gt_neg_count = sum(1 for kp in keypoints if kp['label'] == 'negative')
     gt_pos_count = sum(1 for kp in keypoints if kp['label'] == 'positive')
     gt_total = gt_neg_count + gt_pos_count
@@ -626,9 +608,9 @@ def run_qupath_evaluation(data_list, qupath_seg_dir):
                 })
     
     print(f"\n\n Evaluation complete")
-    print(f"  Total patches: {len(data_list)}")
-    print(f"  Matched with QuPath results: {matched_count}")
-    print(f"  Unmatched: {unmatched_count}")
+    print(f"Total patches: {len(data_list)}")
+    print(f"Matched with QuPath results: {matched_count}")
+    print(f"Unmatched: {unmatched_count}")
     
     return all_coverage_results, ki67_results, samples_for_vis
 
@@ -674,7 +656,7 @@ def visualize_samples(samples):
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / 'qupath_visualization.png', dpi=150)
     plt.close()
-    print(" Visualization saved.")
+    print("Visualization saved.")
 
 
 def generate_report(metrics, ki67_metrics, correlations, num_patches):
@@ -758,9 +740,7 @@ def generate_report(metrics, ki67_metrics, correlations, num_patches):
 
 
 def main():
-    print("="*80)
-    print("QUPATH SEGMENTATION EVALUATION")
-    print("="*80)
+    print("QuPath evaluation:")
     
     print("\nLoading test data...")
     data_list = load_slide_data(DATA_ROOT)
@@ -793,15 +773,7 @@ def main():
     
     generate_report(metrics, ki67_metrics, correlations, len(all_coverage_results))
     
-    print("\n" + "="*80)
-    print("EVALUATION COMPLETE")
-    print("="*80)
     print(f"\nResults saved to: {OUTPUT_DIR}")
-    print("\nGenerated files:")
-    print("  - qupath_evaluation_report.txt")
-    print("  - qupath_visualization.png")
-    print("="*80)
-
 
 if __name__ == "__main__":
     main()

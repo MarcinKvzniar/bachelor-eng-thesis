@@ -31,16 +31,8 @@ CLASS_MAPPING_4_CLASS = {
 INVERSE_CLASS_MAPPING_4_CLASS = {v: k for k, v in CLASS_MAPPING_4_CLASS.items()}
 
 
-def load_keypoints_from_annotations(case_dir: Path) -> dict:
-    """
-    Load keypoints from annotations.json file for a single case.
-    
-    Args:
-        case_dir: Path to the case directory containing annotations.json
-        
-    Returns:
-        Dictionary mapping image_id to list of keypoints [(x, y, category_id)]
-    """
+def load_keypoints_from_annotations(case_dir):
+    """Load keypoints from annotations.json file."""
     annotations_file = case_dir / "annotations.json"
     
     if not annotations_file.exists():
@@ -72,17 +64,8 @@ def load_keypoints_from_annotations(case_dir: Path) -> dict:
     return result
 
 
-def load_keypoints_from_central_annotations(annotations_path: Path, case_id: str) -> dict:
-    """
-    Load keypoints from a central annotations.json file for a specific case.
-    
-    Args:
-        annotations_path: Path to the central annotations.json file
-        case_id: Case ID to filter annotations for
-        
-    Returns:
-        Dictionary mapping filename to list of keypoints [(x, y, category_id)]
-    """
+def load_keypoints_from_central_annotations(annotations_path, case_id):
+    """Load keypoints from central annotations file."""
     with open(annotations_path, 'r') as f:
         data = json.load(f)
     
@@ -119,16 +102,8 @@ def load_keypoints_from_central_annotations(annotations_path: Path, case_id: str
     return result
 
 
-def rgb_to_class_indices(mask_rgb: np.ndarray) -> np.ndarray:
-    """
-    Convert RGB mask to class indices.
-    
-    Args:
-        mask_rgb: RGB mask array (H, W, 3)
-        
-    Returns:
-        Class indices array (H, W)
-    """
+def rgb_to_class_indices(mask_rgb):
+    """Convert RGB mask to class indices."""
     h, w = mask_rgb.shape[:2]
     mask_indices = np.zeros((h, w), dtype=np.uint8)
     
@@ -139,16 +114,8 @@ def rgb_to_class_indices(mask_rgb: np.ndarray) -> np.ndarray:
     return mask_indices
 
 
-def class_indices_to_rgb(mask_indices: np.ndarray) -> np.ndarray:
-    """
-    Convert class indices to RGB mask.
-    
-    Args:
-        mask_indices: Class indices array (H, W)
-        
-    Returns:
-        RGB mask array (H, W, 3)
-    """
+def class_indices_to_rgb(mask_indices):
+    """Convert class indices to RGB mask."""
     h, w = mask_indices.shape
     mask_rgb = np.zeros((h, w, 3), dtype=np.uint8)
     
@@ -158,24 +125,8 @@ def class_indices_to_rgb(mask_indices: np.ndarray) -> np.ndarray:
     return mask_rgb
 
 
-def process_mask_with_keypoints(mask_path: Path, 
-                                keypoints: list,
-                                nucleus_radius: int = 8) -> tuple:
-    """
-    Process a mask based on keypoint annotations:
-    1. Remove nuclei without keypoints
-    2. Split nuclei with multiple keypoints using watershed
-    3. Create circular nuclei for keypoints outside any mask
-    4. Keep boundaries around kept nuclei
-    
-    Args:
-        mask_path: Path to the mask image
-        keypoints: List of (x, y, category_id) tuples
-        nucleus_radius: Radius for creating circular nuclei around orphan keypoints
-        
-    Returns:
-        Tuple of (corrected_mask_rgb, statistics_dict)
-    """
+def process_mask_with_keypoints(mask_path, keypoints, nucleus_radius=8):
+    """Process mask based on keypoint annotations."""
     mask = plt.imread(mask_path)
     if mask.dtype == np.float32 or mask.dtype == np.float64:
         mask = (mask * 255).astype(np.uint8)
@@ -265,8 +216,8 @@ def process_mask_with_keypoints(mask_path: Path,
                 split_region = watershed_labels == split_id
                 corrected_mask_indices[split_region] = 1
     
-    def create_circular_nucleus(x: int, y: int, class_idx: int, radius: int):
-        """Create a circular nucleus mask around a keypoint"""
+    def create_circular_nucleus(x, y, class_idx, radius):
+        """Create circular nucleus mask around keypoint."""
         selem = disk(radius)
         
         point_mask = np.zeros((h, w), dtype=bool)
@@ -287,16 +238,12 @@ def process_mask_with_keypoints(mask_path: Path,
     selem_boundary = disk(boundary_thickness)
     
     all_nuclei_mask = (corrected_mask_indices == 1) | (corrected_mask_indices == 2)
-    labeled_nuclei = label(all_nuclei_mask, connectivity=2)
-    
     all_nuclei_mask = (corrected_mask_indices == 1) | (corrected_mask_indices == 2)
-    
     all_nuclei_dilated = dilation(all_nuclei_mask, selem_boundary)
     
     boundaries = all_nuclei_dilated & (~all_nuclei_mask)
     
     corrected_mask_indices[boundaries] = 3
-    
     corrected_mask_rgb = class_indices_to_rgb(corrected_mask_indices)
     
     removed_positive = original_positive_count - len(positive_nuclei_keypoints)
@@ -323,24 +270,8 @@ def process_mask_with_keypoints(mask_path: Path,
     return corrected_mask_rgb, stats
 
 
-def process_flat_dataset(input_folder: str,
-                        output_folder: str,
-                        annotations_file: str,
-                        nucleus_radius: int = 8,
-                        verbose: bool = True) -> dict:
-    """
-    Process all masks in a FLAT dataset structure (all images in one folder).
-    
-    Args:
-        input_folder: Folder containing all mask images (flat structure)
-        output_folder: Output folder for processed masks
-        annotations_file: Path to central annotations.json file (required)
-        nucleus_radius: Radius for creating nuclei around orphan keypoints
-        verbose: Show progress and details
-        
-    Returns:
-        Dictionary with processing statistics
-    """
+def process_flat_dataset(input_folder, output_folder, annotations_file, nucleus_radius=8, verbose=True):
+    """Process all masks in flat dataset structure."""
     input_path = Path(input_folder)
     output_path = Path(output_folder)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -384,15 +315,7 @@ def process_flat_dataset(input_folder: str,
                 image_info[basename]['keypoints'].append((int(x), int(y), category_id))
     
     if verbose:
-        print(f"\n{'='*80}")
-        print(f"PREPROCESSING ANNOTATED MASKS (FLAT STRUCTURE)")
-        print(f"{'='*80}")
-        print(f"Input folder: {input_folder}")
-        print(f"Output folder: {output_folder}")
-        print(f"Annotations file: {annotations_file}")
-        print(f"Nucleus radius: {nucleus_radius}")
-        print(f"Found {len(image_info)} images with keypoints in annotations")
-        print(f"{'='*80}\n")
+        print(f"Processing {len(image_info)} images (nucleus_radius={nucleus_radius})")
     
     all_stats = []
     total_processed = 0
@@ -435,20 +358,11 @@ def process_flat_dataset(input_folder: str,
             total_skipped += 1
     
     if verbose:
-        print(f"\n{'='*80}")
-        print(f"SUMMARY")
-        print(f"{'='*80}")
-        print(f"Total masks processed: {total_processed}")
-        print(f"Total masks skipped: {total_skipped}")
-        
+        print(f"Processed: {total_processed}, Skipped: {total_skipped}")
         if all_stats:
             total_removed = sum(s['total_removed'] for s in all_stats)
             total_created = sum(s['total_created'] for s in all_stats)
-            print(f"Total nuclei removed (no keypoints): {total_removed}")
-            print(f"Total nuclei created (orphan keypoints): {total_created}")
-        
-        print(f"{'='*80}")
-        print(f"\n Processed masks saved to: {output_folder}")
+            print(f"Removed: {total_removed} nuclei, Created: {total_created} nuclei")
     
     return {
         'total_processed': total_processed,
@@ -457,24 +371,8 @@ def process_flat_dataset(input_folder: str,
     }
 
 
-def process_dataset(input_folder: str, 
-                   output_folder: str,
-                   annotations_file: str = None,
-                   nucleus_radius: int = 8,
-                   verbose: bool = True) -> dict:
-    """
-    Process all masks in the dataset based on keypoint annotations.
-    
-    Args:
-        input_folder: Root folder with case subdirectories
-        output_folder: Output folder for processed masks
-        annotations_file: Path to annotations.json (if None, searches for it in each case folder)
-        nucleus_radius: Radius for creating nuclei around orphan keypoints
-        verbose: Show progress and details
-        
-    Returns:
-        Dictionary with processing statistics
-    """
+def process_dataset(input_folder, output_folder, annotations_file=None, nucleus_radius=8, verbose=True):
+    """Process all masks in dataset based on keypoint annotations."""
     input_path = Path(input_folder)
     output_path = Path(output_folder)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -501,18 +399,7 @@ def process_dataset(input_folder: str,
                     if d.is_dir() and (d / "annotations.json").exists()]
     
     if verbose:
-        print(f"\n{'='*80}")
-        print(f"PREPROCESSING ANNOTATED MASKS")
-        print(f"{'='*80}")
-        print(f"Input folder: {input_folder}")
-        print(f"Output folder: {output_folder}")
-        if use_single_annotations:
-            print(f"Annotations file: {annotations_file}")
-        else:
-            print(f"Annotations: per-case files")
-        print(f"Nucleus radius: {nucleus_radius}")
-        print(f"Found {len(case_dirs)} cases")
-        print(f"{'='*80}\n")
+        print(f"Processing {len(case_dirs)} cases (nucleus_radius={nucleus_radius})")
     
     all_stats = []
     total_processed = 0
@@ -588,20 +475,11 @@ def process_dataset(input_folder: str,
     
     # Summary statistics
     if verbose:
-        print(f"\n{'='*80}")
-        print(f"SUMMARY")
-        print(f"{'='*80}")
-        print(f"Total masks processed: {total_processed}")
-        print(f"Total masks skipped: {total_skipped}")
-        
+        print(f"\nProcessed: {total_processed}, Skipped: {total_skipped}")
         if all_stats:
             total_removed = sum(s['total_removed'] for s in all_stats)
             total_created = sum(s['total_created'] for s in all_stats)
-            print(f"Total nuclei removed (no keypoints): {total_removed}")
-            print(f"Total nuclei created (orphan keypoints): {total_created}")
-        
-        print(f"{'='*80}")
-        print(f"\n Processed masks saved to: {output_folder}")
+            print(f"Removed: {total_removed} nuclei, Created: {total_created} nuclei")
     
     return {
         'total_processed': total_processed,
@@ -611,7 +489,6 @@ def process_dataset(input_folder: str,
 
 
 def main():
-    """Main execution."""
     INPUT_FOLDER = ""
     OUTPUT_FOLDER = ""
     ANNOTATIONS_FILE = ""  
@@ -649,7 +526,7 @@ def main():
         df = pd.DataFrame(results['all_stats'])
         csv_path = Path(OUTPUT_FOLDER) / "preprocessing_statistics.csv"
         df.to_csv(csv_path, index=False)
-        print(f"\n Detailed statistics saved to: {csv_path}")
+        print(f"Statistics saved to: {csv_path}")
 
 
 if __name__ == "__main__":

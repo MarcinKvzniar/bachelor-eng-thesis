@@ -174,7 +174,6 @@ def benchmark_inference_speed(model, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), num
         dummy_batch.append(transformed['image'])
     dummy_tensor = torch.stack(dummy_batch).to(DEVICE)
     
-    print(" Warming up GPU/CPU...")
     with torch.no_grad():
         for _ in range(num_warmup):
             _ = model(pixel_values=dummy_tensor)
@@ -191,7 +190,7 @@ def benchmark_inference_speed(model, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), num
     avg_time_per_image = avg_time_per_batch / batch_size
     fps = 1.0 / avg_time_per_image
     
-    print(f" Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
+    print(f"Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
     
     return {
         'ms_per_image': avg_time_per_image * 1000,
@@ -217,7 +216,7 @@ def build_and_load_model():
     try:
         checkpoint = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
         model.load_state_dict(checkpoint['model_state_dict'])
-        print(" Model loaded successfully!")
+        print("Model loaded successfully")
     except Exception as e:
         print(f"Error loading weights: {e}")
         raise
@@ -400,8 +399,8 @@ def calculate_and_save_metrics(metrics_data, time_metrics):
     
     metrics_file = OUTPUT_DIR / 'metrics.json'
     with open(metrics_file, 'w') as f:
-        json.dump(all_metrics, f, indent=2)
-    print(f" Metrics saved to {metrics_file}")
+        json.dump(all_metrics, f, indent=4)
+    print(f"Metrics saved to {metrics_file}")
     
     return overall_metrics, per_class_metrics, class_distribution
 
@@ -444,7 +443,7 @@ def plot_confusion_matrix(metrics_data):
     save_path = OUTPUT_DIR / 'confusion_matrix.png'
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f" Confusion matrix saved to {save_path}")
+    print(f"Confusion matrix saved to {save_path}")
 
 def plot_per_class_metrics(per_class_metrics):
     """Generate and save per-class metrics bar plots."""

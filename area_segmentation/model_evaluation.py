@@ -142,7 +142,6 @@ def benchmark_inference_speed(model, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), num
     
     dummy_input = np.random.rand(batch_size, *input_shape).astype(np.float32)
     
-    print(" Warming up GPU/CPU...")
     for _ in range(num_warmup):
         _ = model.predict(dummy_input, verbose=0)
         
@@ -157,7 +156,7 @@ def benchmark_inference_speed(model, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), num
     avg_time_per_image = avg_time_per_batch / batch_size
     fps = 1.0 / avg_time_per_image
     
-    print(f" Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
+    print(f"Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
     
     return {
         'ms_per_image': avg_time_per_image * 1000,
@@ -284,8 +283,8 @@ def calculate_and_save_metrics(y_true, y_pred, y_conf, time_metrics):
     
     metrics_file = OUTPUT_DIR / 'metrics.json'
     with open(metrics_file, 'w') as f:
-        json.dump(all_metrics, f, indent=2)
-    print(f" Metrics saved to {metrics_file}")
+        json.dump(all_metrics, f, indent=4)
+    print(f"Metrics saved to {metrics_file}")
     
     return overall_metrics, per_class_metrics, class_distribution
 
@@ -314,7 +313,7 @@ def plot_confusion_matrix(y_true, y_pred):
     save_path = OUTPUT_DIR / 'confusion_matrix.png'
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f" Confusion matrix saved to {save_path}")
+    print(f"Confusion matrix saved to {save_path}")
 
 def plot_per_class_metrics(per_class_metrics):
     """Generate and save per-class metrics bar plots."""
@@ -345,7 +344,7 @@ def plot_per_class_metrics(per_class_metrics):
     save_path = OUTPUT_DIR / 'per_class_metrics.png'
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f" Per-class metrics plot saved to {save_path}")
+    print(f"Per-class metrics saved to {save_path}")
 
 def visualize_sample_predictions(sample_data, num_samples=10):
     """Generate and save sample prediction visualizations."""
@@ -392,7 +391,7 @@ def visualize_sample_predictions(sample_data, num_samples=10):
     save_path = OUTPUT_DIR / 'sample_predictions.png'
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f" Sample predictions saved to {save_path}")
+    print(f"Sample predictions saved to {save_path}")
 
 def visualize_best_worst(sample_data):
     """Generate and save best/worst predictions."""

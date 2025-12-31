@@ -48,7 +48,6 @@ TISSUE_BACKBONE = 'seresnet50'
 TISSUE_NUM_CLASSES = 3
 CANCER_CLASS_ID = 1
 
-# Evaluation Config
 MAX_PATCHES = None  # None = all patches
 IMG_HEIGHT, IMG_WIDTH = 512, 512
 NUM_CLASSES = 4
@@ -131,7 +130,7 @@ def load_slide_data(data_root, max_patches=None):
     slide_dirs = [d for d in data_root.iterdir() if d.is_dir()]
     
     all_data = []
-    print(f"Scanning {len(slide_dirs)} slide directories...")
+    print(f"Scanning {len(slide_dirs)} slide directories")
     
     for slide_dir in sorted(slide_dirs):
         slide_name = slide_dir.name
@@ -150,8 +149,8 @@ def load_slide_data(data_root, max_patches=None):
         except json.JSONDecodeError:
             continue
         
-        print(f"  Processing {slide_name}...")
-        print(f"    Images: {len(coco_data.get('images', []))}, Annotations: {len(coco_data.get('annotations', []))}")
+        print(f"Processing {slide_name}...")
+        print(f"Images: {len(coco_data.get('images', []))}, Annotations: {len(coco_data.get('annotations', []))}")
             
         img_id_to_kps = defaultdict(list)
         for ann in coco_data.get('annotations', []):
@@ -170,7 +169,7 @@ def load_slide_data(data_root, max_patches=None):
                             'label': category_name
                         })
         
-        print(f"    Images with keypoints: {len(img_id_to_kps)}")
+        print(f"Images with keypoints: {len(img_id_to_kps)}")
         
         images_with_kps = 0
         for img_entry in coco_data.get('images', []):
@@ -430,12 +429,12 @@ def benchmark_inference_speed(model, num_warmup=10, num_runs=50, batch_size=1):
         dummy_batch.append(transformed['image'])
     dummy_tensor = torch.stack(dummy_batch).to(DEVICE)
     
-    print(" Warming up GPU/CPU...")
+    print("Warming up GPU/CPU")
     with torch.no_grad():
         for _ in range(num_warmup):
             _ = model(pixel_values=dummy_tensor)
     
-    print(f" Running {num_runs} iterations...")
+    print(f"Running {num_runs} iterations")
     with torch.no_grad():
         start_time = time.time()
         for _ in range(num_runs):
@@ -447,7 +446,7 @@ def benchmark_inference_speed(model, num_warmup=10, num_runs=50, batch_size=1):
     avg_time_per_image = avg_time_per_batch / batch_size
     fps = 1.0 / avg_time_per_image
     
-    print(f" Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
+    print(f"Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
     
     return {
         'ms_per_image': avg_time_per_image * 1000,
@@ -457,7 +456,7 @@ def benchmark_inference_speed(model, num_warmup=10, num_runs=50, batch_size=1):
 
 def build_and_load_model():
     """Build and load the trained SegFormer model."""
-    print("\nBuilding SegFormer model architecture...")
+    print("\nBuilding SegFormer model architecture")
     
     model_name = "nvidia/mit-b3"
     config = SegformerConfig.from_pretrained(model_name)
@@ -469,11 +468,11 @@ def build_and_load_model():
         ignore_mismatched_sizes=True
     )
     
-    print("Loading trained weights...")
+    print("Loading trained weights")
     try:
         checkpoint = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
         model.load_state_dict(checkpoint['model_state_dict'])
-        print(" Model loaded successfully")
+        print("Model loaded successfully")
     except Exception as e:
         print(f"Error loading weights: {e}")
         raise
@@ -485,7 +484,7 @@ def build_and_load_model():
 
 def load_tissue_model():
     """Load TensorFlow tissue segmentation model."""
-    print(f"\nLoading Tissue Specialist Model (Backbone: {TISSUE_BACKBONE})...")
+    print(f"\nLoading tissue specialist model (Backbone: {TISSUE_BACKBONE})")
     model_spec = sm.Unet(backbone_name=TISSUE_BACKBONE, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), 
                          classes=TISSUE_NUM_CLASSES, activation='softmax', encoder_weights=None)
     model_spec.load_weights(TISSUE_MODEL_SPEC_PATH)
@@ -494,7 +493,7 @@ def load_tissue_model():
 
 def run_evaluation(model, tissue_model, data_list):
     """Run evaluation on all patches."""
-    print("\nRunning evaluation...")
+    print("\nRunning evaluation")
     
     all_coverage_results = []
     ki67_results = []
@@ -751,7 +750,7 @@ def visualize_3_panel(samples):
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / 'visualization_3_panel.png', dpi=150, bbox_inches='tight')
     plt.close()
-    print(" Visualization saved.")
+    print("Visualization saved.")
 
 def plot_keypoint_coverage_metrics(metrics):
     """Generate keypoint coverage plots."""
@@ -797,27 +796,26 @@ def plot_keypoint_coverage_metrics(metrics):
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / 'keypoint_metrics.png', dpi=150, bbox_inches='tight')
     plt.close()
-    print(" Keypoint metrics plot saved.")
+    print("Keypoint metrics plot saved.")
 
 def generate_full_report(metrics, ki67_metrics, num_patches):
     """Generate full text report matching U-Net format."""
     print("\nGenerating full text report...")
     
     report_lines = []
-    report_lines.append("NUCLEI SEGMENTATION FULL REPORT")
-    report_lines.append("=================================")
+    report_lines.append("Nuclei Segmentation Full Report")
     report_lines.append(f"Nuclei Model: {MODEL_PATH}")
     report_lines.append("Tissue Model: Specialist")
     report_lines.append(f"Total Patches Evaluated: {num_patches}")
     report_lines.append("Post-Processing: Boundary Removal + Small Object Removal (min_size=50)")
     
-    report_lines.append("\n--- 1. KI-67 INDEX ACCURACY ---")
+    report_lines.append("\n1. KI-67 Index Accuracy")
     report_lines.append(f"  Mean Absolute Error (Patch-level): {ki67_metrics['mae']:.4f}")
     report_lines.append(f"  Global GT Ki-67 Index:             {ki67_metrics['global_gt']:.4f}")
     report_lines.append(f"  Global Pred Ki-67 Index:           {ki67_metrics['global_pred']:.4f}")
     report_lines.append(f"  Global Error:                      {ki67_metrics['global_error']:.4f}")
     
-    report_lines.append("\n--- 2. KEYPOINT COVERAGE & VALIDITY ---")
+    report_lines.append("\n2. Keypoint Coverage & Validity")
     
     total_kps_in_cancer = sum(metrics['keypoint_coverage'][label]['total_keypoints'] for label in ['negative', 'positive'])
     total_excluded = sum(metrics.get('excluded_keypoints', {}).values())
@@ -849,7 +847,7 @@ def generate_full_report(metrics, ki67_metrics, num_patches):
     
     with open(OUTPUT_DIR / 'evaluation_report.txt', 'w') as f:
         f.write(report_text)
-    print(f" Text report saved to {OUTPUT_DIR / 'evaluation_report.txt'}")
+    print(f"Text report saved to {OUTPUT_DIR / 'evaluation_report.txt'}")
     
     print("\n" + report_text)
 
@@ -880,9 +878,7 @@ def save_json_results_old(metrics, ki67_metrics, time_metrics, ece_metrics):
 
 def main():
     """Main execution function."""
-    print("\n" + "=" * 80)
-    print(" " * 15 + "SEGFORMER NUCLEI MODEL EVALUATION")
-    print("=" * 80)
+    print("SegFormer Nuclei Segmentation Evaluation:")
     
     # Load data
     data_list = load_slide_data(DATA_ROOT, max_patches=MAX_PATCHES)
@@ -904,10 +900,7 @@ def main():
     
     generate_full_report(metrics, ki67_metrics, len(data_list))
     
-    print("\n" + "=" * 80)
-    print(" ALL EVALUATION TASKS COMPLETED SUCCESSFULLY")
-    print(f" All results saved to: {OUTPUT_DIR}")
-    print("=" * 80)
+    print(f"All results saved to: {OUTPUT_DIR}")
 
 if __name__ == '__main__':
     main()

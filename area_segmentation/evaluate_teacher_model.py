@@ -89,7 +89,7 @@ class ECETracker:
 
 def benchmark_inference(model, device, input_shape=(3, 512, 512), n_warmup=10, n_runs=50):
     """Benchmarks inference speed."""
-    print("\nBenchmarking Inference Time...")
+    print("\nBenchmarking inference time...")
     dummy_input = torch.randn(1, *input_shape).to(device)
     
     for _ in range(n_warmup):
@@ -269,11 +269,8 @@ def run_full_evaluation(model, device, image_paths, mask_paths):
 
 
 def print_final_summary(metrics, num_images):
-    print("\n" + "="*80)
-    print(" "*20 + "TEACHER MODEL EVALUATION SUMMARY")
-    print("="*80)
-    print(f"  Total Images:   {num_images}")
-    print("\nOVERALL PERFORMANCE:")
+    print(f"\nEvaluation summary ({num_images} images):")
+    print("\nOverall performance:")
     print(f"  Pixel Accuracy:    {metrics['accuracy']:.4f}")
     print(f"  Mean IoU:          {metrics['iou_weighted']:.4f}")
     print(f"  Mean F1-Score:     {metrics['f1_weighted']:.4f}")
@@ -288,12 +285,11 @@ def print_final_summary(metrics, num_images):
         print(f"    Recall:     {metrics['recall_per_class'][i]:.4f}")
         print(f"    F1-Score:   {metrics['f1_per_class'][i]:.4f}")
         print(f"    IoU:        {metrics['iou_per_class'][i]:.4f}")
-    print("="*80)
 
 def save_text_report(metrics, output_dir):
     path = os.path.join(output_dir, "evaluation_report.txt")
     with open(path, "w") as f:
-        f.write("TEACHER MODEL REPORT\n")
+        f.write("Teacher Model Evaluation Report\n")
         f.write(f"ECE: {metrics['ECE']:.4f}\n")
         f.write(f"Time: {metrics['inference_time_ms']:.2f} ms\n")
         f.write(f"Mean IoU: {metrics['iou_weighted']:.4f}\n")
@@ -301,9 +297,7 @@ def save_text_report(metrics, output_dir):
 
 
 def main():
-    print("="*80)
-    print("TEACHER MODEL EVALUATION (ECE & TIME)")
-    print("="*80)
+    print("Teacher model evaluation")
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

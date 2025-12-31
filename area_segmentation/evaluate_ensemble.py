@@ -238,8 +238,8 @@ def calculate_metrics_incremental(confusion_matrices):
 def save_report(metrics, ece_score, time_metrics):
     report_path = OUTPUT_DIR / 'report_hard_overlay.txt'
     with open(report_path, 'w') as f:
-        f.write("EVALUATION REPORT: HARD OVERLAY ENSEMBLE\n")
-        f.write("="*50 + "\n")
+        f.write("Ensemble Evaluation Report\n")
+        f.write("-"*30 + "\n")
         f.write(f"Overall Accuracy: {metrics['accuracy']:.4f}\n")
         f.write(f"Macro F1:         {metrics['f1_macro']:.4f}\n")
         f.write(f"Macro IoU:        {metrics['iou_macro']:.4f}\n")
@@ -258,12 +258,12 @@ def save_report(metrics, ece_score, time_metrics):
     print(f"Report saved: {report_path}")
 
 def main():
-    print("\n=== ENSEMBLE EVALUATION ===")
+    print("Starting ensemble evaluation...")
     
     img_paths, mask_paths = get_data_paths(CLEAN_PATH, MASK_PATH)
     if not img_paths: return
 
-    print("\nLoading Models...")
+    print("\nLoading models...")
     model_a = build_model(); model_a.load_weights(MODEL_A_PATH)
     model_b = build_model(); model_b.load_weights(MODEL_B_PATH)
 
@@ -318,7 +318,7 @@ def main():
         plt.savefig(OUTPUT_DIR / "ensemble_visualization.png", dpi=100)
         plt.close()
 
-    print("\n=== DONE ===")
+    print("\nDone")
 
 if __name__ == '__main__':
     main()

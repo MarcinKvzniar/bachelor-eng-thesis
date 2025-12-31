@@ -75,9 +75,9 @@ CANCER_CLASS_ID = 1
 # Create output directory
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-print(f"TensorFlow version: {tf.__version__}")
-print(f"GPU Available: {len(tf.config.list_physical_devices('GPU')) > 0}")
-print(f"Output directory: {OUTPUT_DIR}")
+print(f"TensorFlow: {tf.__version__}")
+print(f"GPU: {len(tf.config.list_physical_devices('GPU')) > 0}")
+print(f"Output: {OUTPUT_DIR}")
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -193,12 +193,12 @@ def blend_image_mask(image, mask, class_id, color=(255, 255, 0), alpha=0.4):
     return output
 
 def load_slide_data(data_root, max_patches=None):
-    """Load data and optionally sample a subset of patches."""
+    """Load data and optionally sample patches."""
     data_root = Path(data_root)
     slide_dirs = [d for d in data_root.iterdir() if d.is_dir()]
     
     all_data = []
-    print(f"Scanning {len(slide_dirs)} slide directories...")
+    print(f"Scanning {len(slide_dirs)} slide directories")
     
     for slide_dir in sorted(slide_dirs):
         annotations_file = slide_dir / "annotations.json"
@@ -279,7 +279,7 @@ def find_connected_components(mask, class_id):
     return components
 
 def evaluate_patch_ki67(keypoints, pred_mask):
-    """Calculates Ki-67 metrics comparing GT Keypoints vs Prediction Blobs."""
+    """Calculate Ki-67 metrics."""
     gt_pos = sum(1 for k in keypoints if k['label'] == 'positive')
     gt_neg = sum(1 for k in keypoints if k['label'] == 'negative')
     gt_total = gt_pos + gt_neg
@@ -300,7 +300,7 @@ def evaluate_patch_ki67(keypoints, pred_mask):
     }
 
 def calculate_ki67_metrics(ki67_results):
-    """Calculates global and aggregated Ki-67 metrics."""
+    """Calculate global Ki-67 metrics."""
     errors = [r['ki67_abs_error'] for r in ki67_results]
     
     ki67_metrics = {
@@ -321,7 +321,7 @@ def calculate_ki67_metrics(ki67_results):
     return ki67_metrics
 
 def evaluate_patch_coverage(keypoints, pred_mask, excluded_keypoints=None):
-    """Evaluate coverage and mask validity (Original logic)."""
+    """Evaluate keypoint coverage and mask validity."""
     results = {
         'keypoint_metrics': defaultdict(lambda: {'correct': 0, 'incorrect': 0, 'background': 0}),
         'mask_metrics': defaultdict(lambda: {'with_keypoint': 0, 'without_keypoint': 0, 'total_area': 0}),
@@ -362,17 +362,7 @@ def evaluate_patch_coverage(keypoints, pred_mask, excluded_keypoints=None):
     return results
 
 def check_component_has_keypoint(component, keypoints, expected_class, proximity_threshold=3):
-    """Check if a component has a keypoint inside it or within proximity_threshold pixels.
-    
-    Args:
-        component: Component dictionary with 'mask' key
-        keypoints: List of keypoint dictionaries
-        expected_class: Expected class label ('negative' or 'positive')
-        proximity_threshold: Maximum distance in pixels to consider keypoint "close enough"
-    
-    Returns:
-        True if keypoint is inside or within proximity_threshold pixels of the component
-    """
+    """Check if component has keypoint inside or nearby."""
     component_mask = component['mask']
     
     for kp in keypoints:
@@ -409,7 +399,7 @@ def extract_cancer_region_ensemble(image, model_spec):
     return cancer_mask, cancer_image
 
 def filter_keypoints_by_cancer_mask(keypoints, cancer_mask):
-    """Filter keypoints: Keep only those inside the cancer mask (value=1)."""
+    """Filter keypoints by cancer mask."""
     filtered_keypoints = []
     excluded_keypoints = []
     
@@ -428,7 +418,7 @@ def filter_keypoints_by_cancer_mask(keypoints, cancer_mask):
     return filtered_keypoints, excluded_keypoints
 
 def remove_boundaries_from_nuclei(nuclei_mask):
-    """Remove boundary class (class 3) from nuclei mask by setting to background."""
+    """Remove boundary class from mask."""
     processed_mask = nuclei_mask.copy()
     
     boundary_count = np.sum(processed_mask == 3)
@@ -438,16 +428,7 @@ def remove_boundaries_from_nuclei(nuclei_mask):
     return processed_mask, boundary_count
 
 def remove_small_objects_from_mask(nuclei_mask, min_size=50):
-    """Remove small connected components (objects) from each nuclei class.
-    
-    Args:
-        nuclei_mask: Segmentation mask with class indices
-        min_size: Minimum number of pixels for an object to be kept
-    
-    Returns:
-        processed_mask: Mask with small objects removed
-        removed_counts: Dictionary with counts of removed objects per class
-    """
+    """Remove small connected components from mask."""
     processed_mask = nuclei_mask.copy()
     removed_counts = {}
     
@@ -473,20 +454,7 @@ def remove_small_objects_from_mask(nuclei_mask, min_size=50):
     return processed_mask, removed_counts
 
 def apply_post_processing(pred_mask, min_object_size=50):
-    """Apply full post-processing pipeline to prediction mask.
-    
-    Steps:
-    1. Remove boundaries (class 3)
-    2. Remove small objects (< min_object_size pixels)
-    
-    Args:
-        pred_mask: Raw prediction mask with class indices
-        min_object_size: Minimum pixels for an object to be kept
-    
-    Returns:
-        processed_mask: Post-processed mask
-        stats: Dictionary with processing statistics
-    """
+    """Apply post-processing pipeline to mask."""
     stats = {}
     
     mask_no_boundaries, boundary_count = remove_boundaries_from_nuclei(pred_mask)
@@ -498,12 +466,7 @@ def apply_post_processing(pred_mask, min_object_size=50):
     return processed_mask, stats
 
 def compute_ece(y_true, y_pred, y_conf, n_bins=10):
-    """
-    Calculates Expected Calibration Error (ECE).
-    y_true: Flattened array of true labels
-    y_pred: Flattened array of predicted labels
-    y_conf: Flattened array of confidence scores (max probability)
-    """
+    """Calculate Expected Calibration Error."""
     bin_boundaries = np.linspace(0, 1, n_bins + 1)
     ece = 0.0
     
@@ -522,16 +485,14 @@ def compute_ece(y_true, y_pred, y_conf, n_bins=10):
     return ece
 
 def benchmark_inference_speed(model, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), num_warmup=10, num_runs=50, batch_size=1):
-    """Benchmarks inference speed without data loading overhead."""
-    print(f"\nBenchmarking inference speed (Batch Size: {batch_size})...")
+    """Benchmark inference speed."""
+    print(f"\nBenchmarking inference (batch_size={batch_size})")
     
     dummy_input = np.random.rand(batch_size, *input_shape).astype(np.float32)
     
-    print(" Warming up GPU/CPU...")
     for _ in range(num_warmup):
         _ = model.predict(dummy_input, verbose=0)
         
-    print(f" Running {num_runs} iterations...")
     start_time = time.time()
     for _ in range(num_runs):
         _ = model.predict(dummy_input, verbose=0)
@@ -542,7 +503,7 @@ def benchmark_inference_speed(model, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), num
     avg_time_per_image = avg_time_per_batch / batch_size
     fps = 1.0 / avg_time_per_image
     
-    print(f" Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
+    print(f"Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
     
     return {
         'ms_per_image': avg_time_per_image * 1000,
@@ -551,7 +512,7 @@ def benchmark_inference_speed(model, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), num
     }
 
 def build_and_load_nuclei_model():
-    print(f"\nInitializing Nuclei Model Architecture: {MODEL_TYPE} with {BACKBONE}...")
+    print(f"\nBuilding model: {MODEL_TYPE} with {BACKBONE}")
     model = None
     try:
         if 'attention' in MODEL_TYPE.lower():
@@ -568,30 +529,30 @@ def build_and_load_nuclei_model():
                 activation='softmax',
                 encoder_weights=None 
             )
-        print(" Architecture built successfully.")
+        print("Architecture built")
     except Exception as e:
         print(f"CRITICAL ERROR building architecture: {e}")
         return None
 
-    print(f"Loading weights from: {MODEL_PATH}")
+    print(f"Loading weights: {MODEL_PATH}")
     try:
         model.load_weights(MODEL_PATH)
-        print(" Weights loaded successfully!")
+        print("Weights loaded")
     except Exception as e:
-        print(f"Standard load failed ({e}). Trying with skip_mismatch=True...")
+        print(f"Standard load failed ({e}). Trying skip_mismatch...")
         try:
             model.load_weights(MODEL_PATH, skip_mismatch=True, by_name=True)
-            print(" Weights loaded with skip_mismatch!")
+            print("Weights loaded with skip_mismatch")
         except Exception as e2:
             print(f"CRITICAL ERROR loading weights: {e2}")
             return None
     return model
 
 def load_tissue_model():
-    print(f"\nLoading Tissue Specialist Model (Backbone: {TISSUE_BACKBONE})...")
+    print(f"\nLoading tissue model ({TISSUE_BACKBONE})")
     model_spec = sm.Unet(backbone_name=TISSUE_BACKBONE, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3), classes=TISSUE_NUM_CLASSES, activation='softmax', encoder_weights=None)
     model_spec.load_weights(TISSUE_MODEL_SPEC_PATH)
-    print(" Tissue model loaded!")
+    print("Tissue model loaded")
     return model_spec
 
 def evaluate_patch(image, keypoints, pred_mask, excluded_keypoints=None):
@@ -640,7 +601,7 @@ def evaluate_patch(image, keypoints, pred_mask, excluded_keypoints=None):
     return results
 
 def aggregate_results(all_results):
-    """Aggregate coverage/mask validity results from all patches."""
+    """Aggregate results from all patches."""
     aggregated = {
         'keypoint_coverage': defaultdict(lambda: {'correct': 0, 'incorrect': 0, 'background': 0, 'total': 0}),
         'mask_validity': defaultdict(lambda: {'with_keypoint': 0, 'without_keypoint': 0, 'total': 0, 'total_area': 0}),
@@ -671,7 +632,7 @@ def aggregate_results(all_results):
     return aggregated
 
 def calculate_metrics(aggregated):
-    """Calculate final metrics (Original logic)."""
+    """Calculate final metrics."""
     metrics = {
         'keypoint_coverage': {},
         'mask_validity': {},
@@ -723,7 +684,7 @@ def calculate_metrics(aggregated):
     return metrics
 
 def run_evaluation(nuclei_model, model_spec, data_list):
-    print("\nRunning evaluation...")
+    print("\nRunning evaluation")
     
     all_coverage_results = [] 
     ki67_results = []        
@@ -798,7 +759,7 @@ def run_evaluation(nuclei_model, model_spec, data_list):
     return all_coverage_results, ki67_results, samples_for_vis, (ece_true_sample, ece_pred_sample, ece_conf_sample)
 
 def visualize_3_panel(samples):
-    print("\nGenerating 3-panel visualization...")
+    print("\nGenerating 3-panel visualization")
     
     num_samples = len(samples)
     fig, axes = plt.subplots(num_samples, 3, figsize=(18, 6 * num_samples))
@@ -845,10 +806,10 @@ def visualize_3_panel(samples):
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / 'visualization_3_panel.png', dpi=150)
     plt.close()
-    print(" Visualization saved.")
+    print("Visualization saved.")
 
 def plot_keypoint_coverage_metrics(metrics):
-    print("\nGenerating keypoint coverage plots...")
+    print("\nGenerating keypoint coverage plots")
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
     labels = ['Negative', 'Positive']
     coverage_rates = [metrics['keypoint_coverage']['negative']['coverage_rate'], metrics['keypoint_coverage']['positive']['coverage_rate']]
@@ -867,8 +828,8 @@ def plot_keypoint_coverage_metrics(metrics):
     plt.tight_layout(); plt.savefig(OUTPUT_DIR / 'keypoint_metrics.png'); plt.close()
 
 def generate_full_report(metrics, ki67_metrics, time_metrics, ece_value, num_patches):
-    """Generuje pełny raport tekstowy."""
-    print("\nGenerating full text report...")
+    """Generate full text report."""
+    print("\nGenerating report")
     
     with open(OUTPUT_DIR / 'evaluation_report.txt', 'w') as f:
         f.write("NUCLEI SEGMENTATION FULL REPORT\n=================================\n")
@@ -962,7 +923,7 @@ def main():
     with open(OUTPUT_DIR / 'full_metrics_dump.json', 'w') as f:
         json.dump(full_output, f, indent=4, cls=NumpyEncoder)
         
-    print("\n Evaluation Complete! All metrics and plots generated.")
+    print("\nEvaluation complete")
 
 if __name__ == "__main__":
     main()

@@ -50,10 +50,10 @@ else:
 
 # --- Constants ---
 if USE_GPU:
-    CLEAN_PATH = "/app/datasets/dataset_area/ds_3_classes_0.9_filter/clean"
-    MASK_PATH = "/app/datasets/dataset_area/ds_3_classes_0.9_filter/mask"
-    MODEL_PATH = '/app/area_segmentation/models/unet_v1.11_rerun/area_model_unet_3_class.weights.h5'
-    VISUALIZATION_DIR = '/app/area_segmentation/models/unet_v1.11_rerun/outputs'
+    CLEAN_PATH = ""
+    MASK_PATH = ""
+    MODEL_PATH = ''
+    VISUALIZATION_DIR = ''
 else:
     CLEAN_PATH = ""
     MASK_PATH = ""

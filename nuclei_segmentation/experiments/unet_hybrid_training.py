@@ -49,15 +49,15 @@ else:
         print("Using default CPU configuration")
 
 if USE_GPU:
-    SILVER_CLEAN_PATH = "/app/datasets/dataset_nuclei/training_0.9_filter_all/clean"
-    SILVER_MASK_PATH = "/app/datasets/dataset_nuclei/training_0.9_filter_all/mask"
+    SILVER_CLEAN_PATH = ""
+    SILVER_MASK_PATH = ""
     
-    GOLD_CLEAN_PATH = "/app/datasets/dataset_nuclei/training_annotated/clean"
-    GOLD_MASK_PATH = "/app/datasets/dataset_nuclei/training_annotated/mask"
+    GOLD_CLEAN_PATH = ""
+    GOLD_MASK_PATH = ""
     
-    MODEL_DIR = '/app/nuclei_segmentation/models/unet_hybrid_v2_seed2'
-    MODEL_PATH = f'{MODEL_DIR}/nuclei_unet.weights.h5'
-    VISUALIZATION_DIR = f'{MODEL_DIR}/outputs'
+    MODEL_DIR = ''
+    MODEL_PATH = ''
+    VISUALIZATION_DIR = ''
 else:
     SILVER_CLEAN_PATH = ""
     SILVER_MASK_PATH = ""
@@ -66,8 +66,8 @@ else:
     GOLD_MASK_PATH = ""
     
     MODEL_DIR = ''
-    MODEL_PATH = f'{MODEL_DIR}/nuclei_unet.weights.h5'
-    VISUALIZATION_DIR = f'{MODEL_DIR}/outputs'
+    MODEL_PATH = ''
+    VISUALIZATION_DIR = ''
 
 IMG_HEIGHT, IMG_WIDTH = 512, 512
 NUM_CLASSES = 4

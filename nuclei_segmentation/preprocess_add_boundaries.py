@@ -23,6 +23,7 @@ OUTPUT_COLORMAP = [
 ]
 
 def rgb_to_indices(mask_rgb):
+    """Convert RGB mask to indexed format based on RGB_TO_CLASS mapping."""
     mask_rgb = np.array(mask_rgb)
     
     if mask_rgb.shape[-1] == 4:
@@ -38,14 +39,19 @@ def rgb_to_indices(mask_rgb):
     return mask_indices
 
 def apply_colormap(pil_img, colormap):
+    """Apply a colormap to a PIL image in 'P' mode."""
     flat_colormap = []
+
     for color in colormap:
         flat_colormap.extend(color)
+
     flat_colormap.extend([0] * (768 - len(flat_colormap)))
     pil_img.putpalette(flat_colormap)
+
     return pil_img
 
 def add_boundary_class_to_mask(mask_indices, boundary_class=3, thickness=2):
+    """Add a boundary class around nuclei in the mask."""
     objects_mask = (mask_indices > 0).astype(np.uint8)
     
     selem = disk(thickness)
@@ -59,6 +65,7 @@ def add_boundary_class_to_mask(mask_indices, boundary_class=3, thickness=2):
     return mask_with_boundaries
 
 def process_folder(input_folder, output_folder, thickness=2):
+    """Process all images in the input folder to add boundary class and save to output folder."""
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
         print(f"Created output directory: {output_folder}")

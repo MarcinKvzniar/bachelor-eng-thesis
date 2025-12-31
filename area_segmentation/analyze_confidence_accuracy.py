@@ -218,11 +218,8 @@ def predict_with_confidence_and_accuracy(model, device, image_path, mask_path):
 def analyze_confidence_accuracy_correlation(results_list):
     """
     Analyze correlation between confidence and accuracy across all images.
-    Memory-efficient version that processes ALL pixels using streaming aggregation.
     """
-    print("\n" + "="*80)
-    print("CONFIDENCE-ACCURACY CORRELATION ANALYSIS")
-    print("="*80)
+    print("\nAnalyzing confidence-accuracy correlation...")
     
     image_metrics = []
     
@@ -311,7 +308,7 @@ def analyze_confidence_accuracy_correlation(results_list):
         
         del conf_flat, acc_flat
     
-    print("\n--- Overall Correlation (all pixels) ---")
+    print("\nOverall correlation:")
     mean_conf = sum_conf / n_total
     mean_acc = sum_acc / n_total
     
@@ -343,7 +340,7 @@ def analyze_confidence_accuracy_correlation(results_list):
         'pearson': {'correlation': overall_corr, 'p_value': overall_pval}
     }
     
-    print("\n--- Per-Class Correlations (all pixels) ---")
+    print("\nPer-class correlations:")
     class_correlations = {}
     class_accuracies = {}
     class_confidences = {}
@@ -414,8 +411,6 @@ def plot_confidence_vs_accuracy_with_mean(analysis_results, output_dir):
     """
     Plot confidence vs accuracy showing mean confidence line.
     """
-    print("\n--- Creating Confidence vs Accuracy with Mean Confidence Plot ---")
-    
     output_path = Path(output_dir)
     
     bin_conf = np.array(analysis_results['bin_confidences'])
@@ -481,8 +476,6 @@ def plot_pvalue_visualization(analysis_results, output_dir):
     """
     Visualize the p-value calculation for Pearson correlation.
     """
-    print("\n--- Creating P-value Visualization ---")
-    
     output_path = Path(output_dir)
     
     overall_corr, overall_pval = analysis_results['overall_correlation']
@@ -516,7 +509,7 @@ def plot_pvalue_visualization(analysis_results, output_dir):
     ax1.set_xlim(-1, 1)
     ax1.set_ylim(0, 1)
     ax1.set_xlabel('Pearson Correlation Coefficient (r)', fontsize=13, fontweight='bold')
-    ax1.set_title('Correlation Strength: Where Does Our Result Fall?', fontsize=15, fontweight='bold')
+    ax1.set_title('Correlation Coefficient Range', fontsize=15, fontweight='bold')
     ax1.legend(loc='upper right', fontsize=11)
     ax1.set_yticks([])
     
@@ -562,63 +555,33 @@ def plot_pvalue_visualization(analysis_results, output_dir):
     ax4 = fig.add_subplot(gs[2, :])
     ax4.axis('off')
     
-    interpretation = f"""INTERPRETATION OF PEARSON CORRELATION TEST
+    stats_summary = f"""Statistical Summary
 
-Observed Correlation: r = {overall_corr:.6f}
+Pearson r: {overall_corr:.6f}
 P-value: {overall_pval:.6e}
 Sample Size: n = {n_total:,} pixels
 Degrees of Freedom: df = {df:,}
 Test Statistic: t = {t_stat:.4f}
-
 """
     
-    if overall_pval < 0.001:
-        interpretation += "Result: VERY STRONG STATISTICAL SIGNIFICANCE (p < 0.001)\n"
-        interpretation += "The correlation is extremely unlikely to have occurred by chance.\n"
-    elif overall_pval < 0.01:
-        interpretation += "Result: STRONG STATISTICAL SIGNIFICANCE (p < 0.01)\n"
-        interpretation += "The correlation is highly unlikely to have occurred by chance.\n"
-    elif overall_pval < 0.05:
-        interpretation += "Result: STATISTICALLY SIGNIFICANT (p < 0.05)\n"
-        interpretation += "The correlation is unlikely to have occurred by chance.\n"
+    if overall_pval < 0.05:
+        stats_summary += f"\nStatistically significant (p < 0.05)"
     else:
-        interpretation += "Result: NOT STATISTICALLY SIGNIFICANT (p >= 0.05)\n"
-        interpretation += "The correlation could have occurred by chance.\n"
+        stats_summary += f"\nNot statistically significant (p ≥ 0.05)"
     
-    if abs(overall_corr) < 0.1:
-        interpretation += "\nCorrelation Strength: NEGLIGIBLE (|r| < 0.1)\n"
-    elif abs(overall_corr) < 0.3:
-        interpretation += "\nCorrelation Strength: WEAK (0.1 ≤ |r| < 0.3)\n"
-    elif abs(overall_corr) < 0.5:
-        interpretation += "\nCorrelation Strength: MODERATE (0.3 ≤ |r| < 0.5)\n"
-    elif abs(overall_corr) < 0.7:
-        interpretation += "\nCorrelation Strength: STRONG (0.5 ≤ |r| < 0.7)\n"
-    else:
-        interpretation += "\nCorrelation Strength: VERY STRONG (|r| ≥ 0.7)\n"
-    
-    interpretation += "\nConclusion: "
-    if overall_pval < 0.05 and abs(overall_corr) >= 0.1:
-        interpretation += "There IS a statistically significant correlation between confidence and accuracy."
-    elif overall_pval < 0.05 and abs(overall_corr) < 0.1:
-        interpretation += "While statistically significant, the correlation is too weak to be practically meaningful."
-    else:
-        interpretation += "There is NO statistically significant correlation between confidence and accuracy."
-    
-    ax4.text(0.05, 0.95, interpretation, transform=ax4.transAxes, fontsize=11,
+    ax4.text(0.05, 0.95, stats_summary, transform=ax4.transAxes, fontsize=11,
             verticalalignment='top', fontfamily='monospace',
             bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
     
     plt.savefig(output_path / "pvalue_visualization.png", dpi=150, bbox_inches='tight')
     plt.close()
-    print(" Saved p-value visualization")
+    print("Saved p-value visualization")
 
 
 def plot_no_correlation_evidence(analysis_results, output_dir):
     """
     Create plots that demonstrate lack of strong correlation.
     """
-    print("\n--- Creating No-Correlation Evidence Plot ---")
-    
     output_path = Path(output_dir)
     
     bin_conf = np.array(analysis_results['bin_confidences'])
@@ -654,20 +617,6 @@ def plot_no_correlation_evidence(analysis_results, output_dir):
                      fontsize=13, fontweight='bold')
         ax1.legend(loc='best', fontsize=10)
         ax1.grid(True, alpha=0.3)
-        
-        if r_value**2 < 0.1:
-            interpretation = "Poor fit: Linear model explains < 10% of variance\nSuggests weak/no linear correlation"
-            color = 'red'
-        elif r_value**2 < 0.3:
-            interpretation = "Weak fit: Linear model explains < 30% of variance\nSuggests limited linear correlation"
-            color = 'orange'
-        else:
-            interpretation = "Moderate/Good fit: Linear model explains variance\nSuggests meaningful correlation"
-            color = 'green'
-        
-        ax1.text(0.98, 0.02, interpretation, transform=ax1.transAxes,
-                fontsize=9, verticalalignment='bottom', horizontalalignment='right',
-                bbox=dict(boxstyle='round', facecolor=color, alpha=0.3))
     
     ax2 = axes[0, 1]
     
@@ -722,14 +671,13 @@ def plot_no_correlation_evidence(analysis_results, output_dir):
     
     ax3.set_xlabel('Correlation Coefficient', fontsize=12, fontweight='bold')
     ax3.set_ylabel('Probability Density', fontsize=12, fontweight='bold')
-    ax3.set_title('Null Hypothesis: What if There Was NO Correlation?\n'
-                 f'(Based on {n_simulations} random simulations)', 
+    ax3.set_title(f'Null Hypothesis Distribution\n(Based on {n_simulations} random simulations)', 
                  fontsize=13, fontweight='bold')
     ax3.legend(loc='best', fontsize=10)
     ax3.grid(True, alpha=0.3)
     
     percentile = stats.percentileofscore(null_correlations, overall_corr)
-    ax3.text(0.02, 0.98, f'Observed correlation is at\n{percentile:.1f}th percentile\nof null distribution', 
+    ax3.text(0.02, 0.98, f'{percentile:.1f}th percentile', 
             transform=ax3.transAxes, fontsize=10, verticalalignment='top',
             bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.7))
     
@@ -746,82 +694,19 @@ def plot_no_correlation_evidence(analysis_results, output_dir):
     r_lower = (np.exp(2 * z_lower) - 1) / (np.exp(2 * z_lower) + 1)
     r_upper = (np.exp(2 * z_upper) - 1) / (np.exp(2 * z_upper) + 1)
     
-    summary_text = f"""STATISTICAL SUMMARY: LACK OF CORRELATION EVIDENCE
+    summary_text = f"""Statistical Summary
 
-CORRELATION ANALYSIS
+Correlation Analysis:
    Pearson r: {overall_corr:.6f}
    95% CI: [{r_lower:.6f}, {r_upper:.6f}]
    P-value: {overall_pval:.6e}
    
-EFFECT SIZE
-   R² (Coefficient of Determination): {r_value**2:.6f}
-   Confidence explains {r_value**2*100:.2f}% of accuracy variance
-   Remaining {(1-r_value**2)*100:.2f}% due to other factors
+Effect Size:
+   R²: {r_value**2:.6f}
+   Variance explained: {r_value**2*100:.2f}%
    
-PRACTICAL INTERPRETATION"""
-    
-    if abs(overall_corr) < 0.1:
-        summary_text += f"""
-   NEGLIGIBLE correlation (|r| < 0.1)
-   No practical relationship
-   Confidence does not predict accuracy"""
-    elif abs(overall_corr) < 0.3:
-        summary_text += f"""
-   WEAK correlation (|r| < 0.3)
-   Limited practical utility
-   Confidence is a poor predictor of accuracy"""
-    elif abs(overall_corr) < 0.5:
-        summary_text += f"""
-   MODERATE correlation (0.3 ≤ |r| < 0.5)
-   Some predictive value
-   Confidence has limited predictive power"""
-    else:
-        summary_text += f"""
-   STRONG correlation (|r| ≥ 0.5)
-   Practically meaningful
-   Confidence is a good predictor of accuracy"""
-    
-    summary_text += f"""
-
-KEY FINDINGS
-
-1. Residual Analysis:
-   R² = {r_value**2:.4f} indicates {'poor' if r_value**2 < 0.25 else 'moderate' if r_value**2 < 0.5 else 'good'} model fit
-   {'Large' if r_value**2 < 0.25 else 'Moderate' if r_value**2 < 0.5 else 'Small'} unexplained variance suggests
-   {'many other factors beyond confidence affect accuracy' if r_value**2 < 0.5 else 'confidence is a primary factor'}
-
-2. Null Hypothesis Comparison:
-   Observed r at {percentile:.1f}th percentile of null distribution
-   {'Not significantly different from random chance' if percentile < 95 and percentile > 5 else 'Significantly different from random'}
-
-3. Statistical vs Practical Significance:
-   P-value: {overall_pval:.6e} ({'Statistically significant' if overall_pval < 0.05 else 'Not statistically significant'})
-   Effect size: {'Too small to be practically useful' if abs(overall_corr) < 0.3 else 'Large enough for practical use'}
-
-CONCLUSION
-"""
-    
-    if abs(overall_corr) < 0.2 or r_value**2 < 0.1:
-        summary_text += """
-Evidence strongly suggests lack of meaningful correlation:
-- Very weak correlation coefficient
-- Low predictive power (R² < 10%)
-- Confidence cannot reliably predict accuracy
-- Model confidence scores are not reliable indicators of prediction accuracy"""
-    elif abs(overall_corr) < 0.4 or r_value**2 < 0.25:
-        summary_text += """
-Evidence suggests weak/limited correlation:
-- Weak correlation coefficient  
-- Poor predictive power (R² < 25%)
-- Confidence has limited utility for predicting accuracy
-- Caution: Confidence scores have limited reliability"""
-    else:
-        summary_text += """
-Evidence suggests meaningful correlation:
-- Moderate to strong correlation
-- Reasonable predictive power
-- Confidence can help predict accuracy
-- Model confidence scores show reasonable calibration"""
+Null Hypothesis:
+   Observed at {percentile:.1f}th percentile"""
     
     ax4.text(0.05, 0.95, summary_text, transform=ax4.transAxes, fontsize=10,
             verticalalignment='top', fontfamily='monospace',
@@ -836,9 +721,9 @@ Evidence suggests meaningful correlation:
 def create_comprehensive_visualizations(analysis_results, results_list, output_dir):
     """
     Create comprehensive visualizations of confidence-accuracy relationship.
-    Note: Uses binned data for scatter plots since we don't store all individual pixels.
+    Uses binned data for scatter plots
     """
-    print("\n--- Creating Visualizations ---")
+    print("\nCreating visualizations...")
     
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -934,8 +819,6 @@ def save_summary_report(analysis_results, results_list, output_dir):
     """
     Save a concise text summary report of the analysis.
     """
-    print("\n--- Saving Summary Report ---")
-    
     output_path = Path(output_dir)
     report_path = output_path / "analysis_report.txt"
     
@@ -1006,9 +889,7 @@ def get_image_mask_pairs(image_dir, mask_dir):
 
 def main():
     """Main execution function."""
-    print("="*80)
-    print("CONFIDENCE-ACCURACY CORRELATION ANALYSIS")
-    print("="*80)
+    print("Starting confidence-accuracy analysis...")
     
     if not os.path.exists(MODEL_PATH):
         print(f"ERROR: Model not found at {MODEL_PATH}")
@@ -1027,11 +908,9 @@ def main():
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
     
-    print("\n" + "-"*80)
     model = load_model(MODEL_PATH, device)
     
-    print("-"*80)
-    print("Finding image-mask pairs...")
+    print("\nFinding image-mask pairs...")
     pairs = get_image_mask_pairs(IMAGE_DIR, MASK_DIR)
     print(f"Found {len(pairs)} image-mask pairs")
     
@@ -1039,8 +918,7 @@ def main():
         print("ERROR: No image-mask pairs found!")
         return
     
-    print("\n" + "-"*80)
-    print("Processing images and calculating metrics...")
+    print("\nProcessing images...")
     results_list = []
     
     for img_path, mask_path in tqdm(pairs, desc="Analyzing images"):
@@ -1051,16 +929,14 @@ def main():
             print(f"\nError processing {img_path}: {e}")
             continue
     
-    print(f" Successfully processed {len(results_list)} images")
+    print(f"Successfully processed {len(results_list)} images")
     
-    print("\n" + "-"*80)
     analysis_results = analyze_confidence_accuracy_correlation(results_list)
     
     output_path = Path(OUTPUT_DIR)
     output_path.mkdir(parents=True, exist_ok=True)
     print(f"\nOutput directory: {OUTPUT_DIR}")
     
-    print("\n" + "-"*80)
     create_comprehensive_visualizations(analysis_results, results_list, OUTPUT_DIR)
     
     plot_confidence_vs_accuracy_with_mean(analysis_results, OUTPUT_DIR)
@@ -1068,20 +944,6 @@ def main():
     plot_no_correlation_evidence(analysis_results, OUTPUT_DIR)
     
     save_summary_report(analysis_results, results_list, OUTPUT_DIR)
-    
-    print("\n" + "="*80)
-    print("ANALYSIS COMPLETE")
-    print("="*80)
-    print(f"\nResults saved to: {OUTPUT_DIR}")
-    print("\nGenerated files:")
-    print("  - confidence_accuracy_overall.png")
-    print("  - image_level_metrics.png")
-    print("  - confidence_vs_accuracy_mean.png")
-    print("  - pvalue_visualization.png")
-    print("  - no_correlation_evidence.png")
-    print("  - analysis_report.txt")
-    print("="*80)
-
 
 if __name__ == "__main__":
     main()

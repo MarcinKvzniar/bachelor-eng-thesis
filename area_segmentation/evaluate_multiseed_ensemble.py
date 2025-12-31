@@ -182,7 +182,6 @@ def benchmark_inference_speed_ensemble(model_gen, model_spec, input_shape=(IMG_H
     
     dummy_input = np.random.rand(batch_size, *input_shape).astype(np.float32)
     
-    print(" Warming up...")
     for _ in range(num_warmup):
         _ = model_gen.predict(dummy_input, verbose=0)
         _ = model_spec.predict(dummy_input, verbose=0)
@@ -201,7 +200,7 @@ def benchmark_inference_speed_ensemble(model_gen, model_spec, input_shape=(IMG_H
     avg_time_per_image = avg_time_per_batch / batch_size
     fps = 1.0 / avg_time_per_image
     
-    print(f" Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
+    print(f"Result: {avg_time_per_image*1000:.2f} ms/image | {fps:.2f} FPS")
     
     return {
         'ms_per_image': avg_time_per_image * 1000,
@@ -323,10 +322,7 @@ def evaluate_ensemble_seed(config, image_paths, mask_paths):
         ece_value = 0.0
         print("Warning: No data collected for ECE!")
     
-    print("\n" + "-"*50)
-    print("RESULTS")
-    print("-"*50)
-    print(f"Seed: {config['seed']}")
+    print(f"\nResults for seed {config['seed']}:")
     print(f"Generalist: {config['generalist']}")
     print(f"Specialist: {config['specialist']}")
     print(f"Images Evaluated: {len(image_paths)}")
@@ -334,7 +330,6 @@ def evaluate_ensemble_seed(config, image_paths, mask_paths):
     print(f"Ensemble Inference Time: {time_metrics['ms_per_image']:.2f} ms/image")
     print(f"Ensemble Throughput:     {time_metrics['fps']:.2f} FPS")
     print(f"ECE: {ece_value:.4f}")
-    print("-"*50)
     
     del model_gen, model_spec
     tf.keras.backend.clear_session()
@@ -351,9 +346,7 @@ def evaluate_ensemble_seed(config, image_paths, mask_paths):
     }
 
 def main():
-    print("="*80)
-    print("MULTI-SEED ENSEMBLE MODEL EVALUATION (Generalist + Specialist)")
-    print("="*80)
+    print("Multi-seed ensemble evaluation")
     print(f"Evaluating {len(ENSEMBLE_CONFIGS)} ensemble seeds")
     print(f"Output directory: {OUTPUT_DIR}")
     
@@ -366,9 +359,7 @@ def main():
     
     all_results = []
     for i, config in enumerate(ENSEMBLE_CONFIGS, 1):
-        print(f"\n{'='*80}")
-        print(f"ENSEMBLE SEED {i}/{len(ENSEMBLE_CONFIGS)}")
-        print(f"{'='*80}")
+        print(f"\n[{i}/{len(ENSEMBLE_CONFIGS)}]")
         
         result = evaluate_ensemble_seed(config, image_paths, mask_paths)
         if result:
@@ -407,9 +398,7 @@ def main():
             'individual_results': all_results
         }
         
-        print("\n" + "="*80)
-        print("SUMMARY ACROSS ALL SEEDS")
-        print("="*80)
+        print("\nSummary across all seeds:")
         print(f"Seeds evaluated: {len(all_results)}")
         print(f"Images per seed: {all_results[0]['num_images']}")
         print(f"Pixels per seed: {all_results[0]['num_pixels']:,}")
@@ -419,7 +408,6 @@ def main():
         print(f"  Range: [{summary['inference_time_ms']['min']:.2f}, {summary['inference_time_ms']['max']:.2f}] ms")
         print(f"\nThroughput: {summary['fps']['mean']:.2f} ± {summary['fps']['std']:.2f} FPS")
         print(f"  Range: [{summary['fps']['min']:.2f}, {summary['fps']['max']:.2f}] FPS")
-        print("="*80)
         
         output_file = OUTPUT_DIR / 'ensemble_all_seeds_ece_inference_metrics.json'
         with open(output_file, 'w') as f:

@@ -5,14 +5,14 @@ clean images from a parallel folder with the same structure.
 
 import os
 from pathlib import Path
-from typing import Tuple
 
 import cv2
 import numpy as np
 from tqdm import tqdm
 
 
-def count_non_white_pixels(image_path: str, white_threshold: int = 250) -> Tuple[int, int]:
+def count_non_white_pixels(image_path, white_threshold):
+    """Count non-white pixels in image."""
     image = cv2.imread(image_path)
     if image is None:
         raise ValueError(f"Could not load image: {image_path}")
@@ -27,17 +27,11 @@ def count_non_white_pixels(image_path: str, white_threshold: int = 250) -> Tuple
 
     total_pixels = image_rgb.shape[0] * image_rgb.shape[1]
     non_white_pixels = np.sum(~is_white)
+
     return non_white_pixels, total_pixels
 
-
-def remove_white_images_and_clean(
-    mask_folder: str,
-    clean_folder: str,
-    min_content_percent: float = 1.0,
-    white_threshold: int = 250,
-    dry_run: bool = True,
-    verbose: bool = True
-):
+def remove_white_images_and_clean(mask_folder, clean_folder, min_content_percent=1.0, white_threshold=250, dry_run=True, verbose=True):
+    """Remove mask images that are mostly white and corresponding clean images."""
     mask_path = Path(mask_folder)
     clean_path = Path(clean_folder)
 
@@ -46,7 +40,6 @@ def remove_white_images_and_clean(
     if not clean_path.exists():
         raise FileNotFoundError(f"Clean folder does not exist: {clean_folder}")
 
-    # Mask image extensions
     image_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'}
     image_files = []
 
@@ -57,12 +50,9 @@ def remove_white_images_and_clean(
     image_files = sorted(set(image_files))
 
     if verbose:
-        print(f"\n=== MASK CLEANING with CLEAN-IMAGE REMOVAL ===")
-        print(f"Mask folder:  {mask_folder}")
-        print(f"Clean folder: {clean_folder}")
-        print(f"Found mask images: {len(image_files)}")
+        print(f"\nProcessing {len(image_files)} mask images")
         if dry_run:
-            print(" DRY RUN MODE — nothing will be deleted")
+            print("DRY RUN MODE - nothing will be deleted")
 
     total = len(image_files)
     removed_masks = 0
@@ -75,25 +65,21 @@ def remove_white_images_and_clean(
             pct = (non_white / total_pixels) * 100
 
             if pct < min_content_percent:
-                # Mark mask for removal
                 removed_masks += 1
 
-                # Compute corresponding clean image path
                 mask_rel = mask_img.relative_to(mask_path)
                 clean_img = clean_path / mask_rel
                 clean_img = Path(str(clean_img).replace("_mask", ""))
 
                 if verbose:
-                    tqdm.write(f"❌ Removing MASK: {mask_img} ({pct:.2f}% content)")
+                    tqdm.write(f"Removing: {mask_img.name} ({pct:.2f}% content)")
 
-                # Remove MASK
                 if not dry_run:
                     os.remove(mask_img)
 
-                # Remove corresponding CLEAN if exists
                 if clean_img.exists():
                     if verbose:
-                        tqdm.write(f"   ↳ Removing CLEAN: {clean_img.name}")
+                        tqdm.write(f"Removing clean: {clean_img.name}")
 
                     if not dry_run:
                         os.remove(clean_img)
@@ -107,13 +93,9 @@ def remove_white_images_and_clean(
                 tqdm.write(f" Error on {mask_img.name}: {e}")
 
     if verbose:
-        print("\n=== SUMMARY ===")
-        print(f"Total mask images: {total}")
-        print(f"Kept:             {kept}")
-        print(f"Removed masks:    {removed_masks}")
-        print(f"Removed cleans:   {removed_cleans}")
+        print(f"\nTotal: {total}, Kept: {kept}, Removed: {removed_masks} masks + {removed_cleans} cleans")
         if dry_run:
-            print("\nDRY RUN — set dry_run=False to delete files")
+            print("DRY RUN - set dry_run=False to delete")
 
     return total, kept, removed_masks, removed_cleans
 

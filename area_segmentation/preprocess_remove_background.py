@@ -14,8 +14,8 @@ THRESHOLD = 0.95
 removed_count = 0
 processed_count = 0
 
-print(f"Processing clean directory: {clean_dir}")
-print(f"Processing mask directory: {mask_dir}")
+print(f"Clean directory: {clean_dir}")
+print(f"Mask directory: {mask_dir}")
 
 for folder_num in range(1, 14):
     mask_subdir = os.path.join(mask_dir, str(folder_num))
@@ -69,5 +69,5 @@ for folder_num in range(1, 14):
     
     print(f"Processed {files_in_folder} files in folder {folder_num}")
 
-print(f"\nTotal files processed: {processed_count}")
-print(f"\nTotal files removed: {removed_count}")
+print(f"\nTotal processed: {processed_count}")
+print(f"Total removed: {removed_count}")
